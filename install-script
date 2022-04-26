@@ -24,6 +24,7 @@ ROOT_PARTITION=/dev/sda4
 ROOT_FS_TYPE=btrfs
 
 STAGE3=stage3/stage3*
+PROFILE="default/linux/amd64/17.0/musl/hardened/selinux"
 KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is optimized for my particular system you will have to modify it for your system
 
 HOSTNAME="gentoo"
@@ -87,7 +88,6 @@ install_gentoo_prep ()
   command mkdir -pv ${MOUNT_LOCATION}/etc
   command mkdir -pv ${MOUNT_LOCATION}/etc/portage
 
-
   message "Copying kernel configuration files"
   command cp -rv $KERNEL_CONFIG_FILE ${MOUNT_LOCATION}/kernel-config
 
@@ -145,8 +145,8 @@ MAKEOPTS="${MAKE_OPTIONS}"
 EOF
 
   #Installation
-  message "Setting Profile to default/linux/amd64/13.0/desktop "
-  command eselect profile set default/linux/amd64/13.0/desktop
+  message "Setting Profile to ${PROFILE}"
+  command eselect profile set "${PROFILE}"
 
   message "Updating @world set"
   command emerge --ask --update --deep --newuse @world
