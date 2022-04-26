@@ -1,15 +1,26 @@
 #!/bin/bash
+set -euo pipefail
 
+MIRROR="https://mirror.wheel.sk/gentoo"
+ARCH="amd64"
+STAGE_FLAVOR="stage3-$ARCH-musl-hardened"
 DESTINATION="./stage3"
 
 function stage3Download() {
-	printf "\n"
-	echo -e "\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m"	
-	LATEST=$(wget --quiet http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64.txt -O-| tail -n 1 | cut -d " " -f 1)
+	mkdir -p "$DESTINATION"
+	printf "\n\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m\n"
+	LATEST=$(curl --silent -L "$MIRROR/releases/$ARCH/autobuilds/latest-$STAGE_FLAVOR.txt" | tail -n 1 | cut -d " " -f 1)
 	BASENAME=$(basename "$LATEST")
-	wget -q --show-progress "http://distfiles.gentoo.org/releases/amd64/autobuilds/$LATEST" -O "$DESTINATION/$BASENAME"
-	BASENAME=$(basename "$STAGE3")
-	wget -q --show-progress "$STAGE3" -O "$DESTINATION/$BASENAME"
+	curl --progress-bar -L -C - "$MIRROR/releases/$ARCH/autobuilds/$LATEST" -o "$DESTINATION/$BASENAME"
+	curl --progress-bar -L "$MIRROR/releases/$ARCH/autobuilds/$LATEST.asc" -o "$DESTINATION/$BASENAME.asc"
+	curl --progress-bar -L "$MIRROR/releases/$ARCH/autobuilds/$LATEST.DIGESTS" -o "$DESTINATION/$BASENAME.DIGESTS"
+
+	printf "\n\e[33m\xe2\x8f\xb3 Verifying the stage 3 tarball... \e[m\n"
+	gpg --quiet --keyserver hkps://keys.gentoo.org --recv-keys 0xBB572E0E2D182910
+	gpg --quiet --verify "$DESTINATION/$BASENAME.asc"
+	openssl dgst -r -sha512 "$DESTINATION/$BASENAME"
+
+	printf "\n\e[33m✅ Done!\e[m\n"	
 }
 
 stage3Download
