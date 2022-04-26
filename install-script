@@ -9,12 +9,12 @@ DGRAY='\033[1;30m'
 NC='\033[0m' # No Color
 
 MOUNT_LOCATION=/mnt/gentoo
-TIMEZONE=Asia/Dubai
+TIMEZONE=Europe/Bratislava
 
-CFLAGS="-march=haswell -O2 -pipe"
+CFLAGS="-march=native -O2 -pipe"
 CPU_FLAGS="aes avx fma3 mmx mmxext popcnt sse sse2 sse3 sse4_1 sse4_2 ssse3"
 USE_FLAGS="X acl bindist mmx sse sse2 -suid -kde -qt4 sna dri pulseaudio alsa dbus"
-MAKE_OPTIONS="-j9"
+MAKE_OPTIONS="-j$(nproc)"
 
 BIOS_PARTITION=/dev/sda1
 BOOT_PARTITION=/dev/sda2
@@ -121,20 +121,27 @@ install_gentoo_chroot()
 
   message "Configuring /etc/portage/make.conf"
   cat << EOF > /etc/portage/make.conf
-CFLAGS="${CFLAGS}"
-CXXFLAGS="\${CFLAGS}"
-CPU_FLAGS="$CPU_FLAGS"
-
+COMMON_FLAGS="${CFLAGS}"
+CFLAGS="\${COMMON_FLAGS}"
+CXXFLAGS="\${COMMON_FLAGS}"
+FCFLAGS="\${COMMON_FLAGS}"
+FFLAGS="\${COMMON_FLAGS}"
+# CPU_FLAGS="${CPU_FLAGS}"
 # WARNING: Changing your CHOST is not something that should be done lightly.
-# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
-CHOST="x86_64-pc-linux-gnu"
-# These are the USE flags that were used in addition to what is provided by the
-# profile used for building.
-USE="${USE_FLAGS}"
-MAKEOPTS="-j9"
-PORTDIR="/usr/portage"
-DISTDIR="${PORTDIR}/distfiles"
-PKGDIR="${PORTDIR}/packages"
+# Please consult https://wiki.gentoo.org/wiki/Changing_the_CHOST_variable before changing.
+CHOST="x86_64-gentoo-linux-musl"
+
+# NOTE: This stage was built with the bindist Use flag enabled
+PORTDIR="/var/db/repos/gentoo"
+DISTDIR="/var/cache/distfiles"
+PKGDIR="/var/cache/binpkgs"
+
+# This sets the language of build output to English.
+# Please keep this setting intact when reporting bugs.
+LC_MESSAGES=C
+
+# USE="${USE_FLAGS}"
+MAKEOPTS="${MAKE_OPTIONS}"
 EOF
 
   #Installation
